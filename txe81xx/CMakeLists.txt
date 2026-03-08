@@ -5,6 +5,5 @@
 idf_component_register(
     SRCS "src/txe81xx.c"
     INCLUDE_DIRS "include"
-    REQUIRES "esp_driver_gpio"
-    PRIV_REQUIRES "driver esp_driver_spi"
+    REQUIRES "esp_driver_gpio esp_driver_spi"
     )
