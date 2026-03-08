@@ -166,4 +166,4 @@ jobs:
             -v "${GITHUB_WORKSPACE}:/project" \
             -w "/project/${{ matrix.test.test_path }}" \
             "espressif/idf:${{ matrix.idf_version }}" \
-            bash -lc "python -m pip install --upgrade pip && python -m pip install pytest pytest-embedded pytest-embedded-idf pytest-embedded-qemu && idf.py set-target ${{ matrix.test.qemu_target }} build && pytest -q -o python_files='pytest*.py test_*.py *_test.py' --target ${{ matrix.test.qemu_target }} --embedded-services qemu"
+            bash -lc "python -m pip install --upgrade pip && python -m pip install pytest pytest-embedded pytest-embedded-idf pytest-embedded-qemu && idf.py set-target ${{ matrix.test.qemu_target }} build && python \"$IDF_PATH/components/esptool_py/esptool/esptool.py\" --chip ${{ matrix.test.qemu_target }} merge_bin -o build/flash_image.bin @build/flash_args && pytest -q -o python_files='pytest*.py test_*.py *_test.py' --target ${{ matrix.test.qemu_target }} --embedded-services qemu"
