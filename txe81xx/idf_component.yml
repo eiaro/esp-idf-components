@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Ronny Eia <3652665+eiaro@users.noreply.github.com>
 # SPDX-License-Identifier: MIT
 
-version: "1.0.0"
+version: "1.0.1"
 description: "ESP-IDF component for interfacing with the TXE81XX I/O expanders."
 url: "https://github.com/eiaro/esp-idf-txe81xx"
 license: "MIT"

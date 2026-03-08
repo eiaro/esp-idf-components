@@ -33,14 +33,23 @@ The example app in `examples/blinky` uses `idf_component.yml` with `override_pat
 ## Quick usage
 
 ```c
+spi_bus_config_t bus_cfg = {
+    .mosi_io_num = 11,
+    .miso_io_num = 12,
+    .sclk_io_num = 13,
+    .quadwp_io_num = -1,
+    .quadhd_io_num = -1,
+};
+ESP_ERROR_CHECK(spi_bus_initialize(SPI2_HOST, &bus_cfg, SPI_DMA_CH_AUTO));
+
 txe81xx_spi_config_t cfg = {
-	.host = SPI2_HOST,
-	.cs_gpio = 5,
-	.clock_hz = 1000000,
-	.mode = 0,
-	.queue_size = 1,
-	.use_polling = true,
-	.chip = TXE_CHIP_8116,
+    .host = SPI2_HOST,
+    .cs_gpio = 10,
+    .clock_hz = 1000000,
+    .mode = 0,
+    .queue_size = 1,
+    .use_polling = true,
+    .chip = TXE_CHIP_8116,
 };
 
 txe81xx_handle_t dev = NULL;
