@@ -3,7 +3,7 @@
 # SPDX-License-Identifier: MIT
 
 idf_component_register(
-    SRCS "max31856.c"
+    SRCS "src/max31856.c"
     INCLUDE_DIRS "include"
-    REQUIRES "driver"    
+    REQUIRES "esp_driver_gpio esp_driver_spi"
 )
