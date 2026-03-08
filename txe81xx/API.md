@@ -22,6 +22,7 @@
 | enum  | [**txe81xx\_port\_t**](#enum-txe81xx_port_t)  <br> |
 | struct | [**txe81xx\_spi\_config\_t**](#struct-txe81xx_spi_config_t) <br> |
 | typedef struct [**txe81xx\_t**](#typedef-txe81xx_t) | [**txe81xx\_t**](#typedef-txe81xx_t)  <br> |
+| typedef esp\_err\_t(\* | [**txe81xx\_xfer24\_fn**](#typedef-txe81xx_xfer24_fn)  <br> |
 
 ## Functions
 
@@ -78,6 +79,10 @@ Variables:
 -  spi\_device\_handle\_t spi  
 
 -  bool use_polling  
+
+-  [**txe81xx\_xfer24\_fn**](#typedef-txe81xx_xfer24_fn) xfer24  
+
+-  void \* xfer24_ctx  
 
 ### typedef `txe81xx_handle_t`
 
@@ -143,6 +148,12 @@ Variables:
 
 ```c
 typedef struct txe81xx_t txe81xx_t;
+```
+
+### typedef `txe81xx_xfer24_fn`
+
+```c
+typedef esp_err_t(* txe81xx_xfer24_fn) (void *user_ctx, const uint8_t tx[3], uint8_t rx[3]);
 ```
 
 

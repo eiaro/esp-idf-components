@@ -32,6 +32,8 @@ typedef enum {
 typedef struct txe81xx_t txe81xx_t;
 typedef txe81xx_t *txe81xx_handle_t;
 
+typedef esp_err_t (*txe81xx_xfer24_fn)(void *user_ctx, const uint8_t tx[3], uint8_t rx[3]);
+
 typedef struct {
     spi_host_device_t host;
     int cs_gpio;
@@ -46,6 +48,8 @@ typedef struct {
     spi_device_handle_t spi; // borrowed
     bool use_polling;
     txe81xx_chip_t chip;
+    txe81xx_xfer24_fn xfer24; // optional test hook; if set, used instead of spi_device_transmit
+    void *xfer24_ctx;
 } txe81xx_handle_config_t;
 
 /* ---- Core init/deinit ---- */

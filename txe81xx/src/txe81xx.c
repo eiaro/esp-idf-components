@@ -46,6 +46,8 @@ struct txe81xx_t {
     bool owns_spi_device;
     bool use_polling;
     txe81xx_chip_t chip;
+    txe81xx_xfer24_fn xfer24;
+    void *xfer24_ctx;
 
 #if CONFIG_TXE81XX_USE_MUTEX
     SemaphoreHandle_t mutex;
@@ -80,7 +82,7 @@ static inline bool txe_chip_valid(txe81xx_chip_t chip)
 
 static inline bool txe_dev_ready(const txe81xx_t *dev)
 {
-    return dev && dev->spi;
+    return dev && (dev->spi || dev->xfer24);
 }
 
 #if CONFIG_TXE81XX_USE_MUTEX
@@ -127,7 +129,7 @@ static esp_err_t txe_xfer24(txe81xx_t *dev,
                             uint8_t b0, uint8_t b1, uint8_t b2,
                             uint16_t *out_status16, uint8_t *out_data8)
 {
-    if (!dev || !dev->spi) {
+    if (!dev || (!dev->spi && !dev->xfer24)) {
         ESP_LOGE(TAG, "xfer24 called with device not ready");
         return ESP_ERR_INVALID_STATE;
     }
@@ -135,14 +137,19 @@ static esp_err_t txe_xfer24(txe81xx_t *dev,
     uint8_t tx[3] = { b0, b1, b2 };
     uint8_t rx[3] = { 0 };
 
-    spi_transaction_t t;
-    memset(&t, 0, sizeof(t));
-    t.length = 24;
-    t.tx_buffer = tx;
-    t.rx_buffer = rx;
+    esp_err_t err;
+    if (dev->xfer24) {
+        err = dev->xfer24(dev->xfer24_ctx, tx, rx);
+    } else {
+        spi_transaction_t t;
+        memset(&t, 0, sizeof(t));
+        t.length = 24;
+        t.tx_buffer = tx;
+        t.rx_buffer = rx;
 
-    esp_err_t err = dev->use_polling ? spi_device_polling_transmit(dev->spi, &t)
-                    : spi_device_transmit(dev->spi, &t);
+        err = dev->use_polling ? spi_device_polling_transmit(dev->spi, &t)
+              : spi_device_transmit(dev->spi, &t);
+    }
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "SPI transfer failed: %s", esp_err_to_name(err));
         return err;
@@ -296,6 +303,8 @@ esp_err_t txe81xx_init_spi(const txe81xx_spi_config_t *cfg, txe81xx_handle_t *ou
     dev->owns_spi_device = true;
     dev->use_polling = cfg->use_polling;
     dev->chip = cfg->chip;
+    dev->xfer24 = NULL;
+    dev->xfer24_ctx = NULL;
 
     spi_device_interface_config_t devcfg = {
         .clock_speed_hz = cfg->clock_hz,
@@ -320,8 +329,8 @@ esp_err_t txe81xx_init_spi(const txe81xx_spi_config_t *cfg, txe81xx_handle_t *ou
 
 esp_err_t txe81xx_init_handle(const txe81xx_handle_config_t *cfg, txe81xx_handle_t *out)
 {
-    if (!cfg || !out || !cfg->spi) {
-        ESP_LOGE(TAG, "init_handle invalid args (cfg/out/spi)");
+    if (!cfg || !out || (!cfg->spi && !cfg->xfer24)) {
+        ESP_LOGE(TAG, "init_handle invalid args (cfg/out/spi_or_xfer24)");
         return ESP_ERR_INVALID_ARG;
     }
     *out = NULL;
@@ -339,6 +348,8 @@ esp_err_t txe81xx_init_handle(const txe81xx_handle_config_t *cfg, txe81xx_handle
     dev->owns_spi_device = false;
     dev->use_polling = cfg->use_polling;
     dev->chip = cfg->chip;
+    dev->xfer24 = cfg->xfer24;
+    dev->xfer24_ctx = cfg->xfer24_ctx;
 
     TXE_LOGV("init_handle ok chip=%d", (int)cfg->chip);
     *out = dev;
