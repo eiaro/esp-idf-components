@@ -11,7 +11,7 @@
 static const char *TAG = "MAX31856_TEST";
 
 // SPI Configuration
-#define ESP_HOST VSPI_HOST
+#define ESP_HOST SPI2_HOST
 #define PIN_NUM_MISO GPIO_NUM_2
 #define PIN_NUM_MOSI GPIO_NUM_7
 #define PIN_NUM_CLK  GPIO_NUM_6
