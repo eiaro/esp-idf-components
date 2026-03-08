@@ -1,0 +1,10 @@
+# SPDX-FileCopyrightText: 2026 Ronny Eia <3652665+eiaro@users.noreply.github.com>
+# SPDX-License-Identifier: MIT
+
+**/.vscode/*
+**/sdkconfig
+**/sdkconfig.old
+**/dependencies.lock
+**/dist/*
+**/build*
+**/doxygen_output*

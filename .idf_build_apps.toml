@@ -1,0 +1,14 @@
+recursive = true
+exclude = [
+    ".github",
+]
+manifest_file = [
+    "txe81xx/.build-test-rules.yml",
+    ".build-test-rules.yml",
+]
+check_warnings = true
+
+# build related options
+build_dir = "build_@t_@w"
+config = ["sdkconfig.ci","sdkconfig.ci.*="]
+ignore_warning_file = ".ignore_build_warnings.txt"

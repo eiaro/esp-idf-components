@@ -1,0 +1,34 @@
+name: Publish components
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+
+jobs:
+  publish_components:
+    runs-on: ubuntu-latest
+    env:
+      SHOULD_PUBLISH: ${{ github.event_name == 'push' && github.ref_name == 'master' && secrets.IDF_COMPONENT_API_TOKEN != '' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Select publish mode
+        run: |
+          if [ "${SHOULD_PUBLISH}" = "true" ]; then
+            echo "Running in publish mode"
+          else
+            echo "Running in dry-run mode"
+          fi
+
+      - name: Upload component set
+        uses: espressif/upload-components-ci-action@v2
+        with:
+          components: |
+            txe81xx
+          namespace: eiaro
+          api_token: ${{ secrets.IDF_COMPONENT_API_TOKEN }}
+          dry_run: ${{ env.SHOULD_PUBLISH != 'true' }}

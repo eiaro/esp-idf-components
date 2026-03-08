@@ -1,0 +1,58 @@
+name: Bug report
+description: Report build and runtime bugs
+labels: ["Type: Bug"]
+body:
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Answers checklist.
+      description: Before submitting a new issue, please go through this checklist.
+      options:
+        - label: I have read the repository README and component documentation, and the issue is not addressed there.
+          required: true
+        - label: I am using a supported target and ESP-IDF version for this component.
+          required: true
+        - label: I have searched this repository's issue tracker and did not find the same issue.
+          required: true
+  - type: dropdown
+    id: component
+    attributes:
+      label: Which component are you using? If you choose Other, provide details in More Information.
+      multiple: false
+      options:
+        - txe81xx
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: idf_version
+    attributes:
+      label: ESP-IDF version.
+      description: On which ESP-IDF version does this issue occur on? Run `git describe --tags` in your esp-idf folder to find it.
+      placeholder: ex. v5.0-rc1
+    validations:
+      required: true
+  - type: input
+    id: devkit
+    attributes:
+      label: Development Kit.
+      description: On which Development Kit does this issue occur on?
+      placeholder: ex. ESP32-Wrover-Kit v2 | Custom Board
+    validations:
+      required: true
+  - type: input
+    id: component_version
+    attributes:
+      label: Used Component version.
+      description: On which component version does this issue occur? Check your `dependencies.lock` file in the project root.
+      placeholder: ex. v1.2.0-rc0
+    validations:
+      required: true
+  - type: textarea
+    id: more-info
+    attributes:
+      label: More Information.
+      description: Do you have any other information from investigating this?
+      placeholder: ex. I tried on my friend's Windows 10 PC and the command works there.
+    validations:
+      required: false
