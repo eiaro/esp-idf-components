@@ -34,13 +34,16 @@ def validate_build_manifest_registry(root_dir: Path) -> list[str]:
     LOG.info("Checking .idf_build_apps.toml manifest entries")
 
     repo_manifests = {
-        Path(path)
+        Path(path).resolve().relative_to(root_dir).as_posix()
         for path in glob.glob(f"{root_dir}/**/.build-test-rules.yml", recursive=True)
         if "managed_components" not in path
     }
 
     config = load_toml(root_dir / ".idf_build_apps.toml")
-    configured_manifests = {Path(path) for path in config.get("manifest_file", [])}
+    configured_manifests = {
+        Path(path).as_posix().lstrip("./")
+        for path in config.get("manifest_file", [])
+    }
 
     missing = sorted(repo_manifests - configured_manifests)
     if missing:

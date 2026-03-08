@@ -12,6 +12,7 @@
 #include "esp_err.h"
 #include "driver/spi_master.h"
 #include "driver/gpio.h"
+#include "freertos/FreeRTOS.h"
 
 #ifdef __cplusplus
 extern "C" {
