@@ -73,7 +73,7 @@ jobs:
           PY
 
       - name: Fail when no examples found
-        if: ${{ steps.discover.outputs.example_count == '' || steps.discover.outputs.example_count == '0' }}
+        if: ${{ fromJSON(steps.discover.outputs.example_count || '0') == 0 }}
         shell: bash
         run: |
           echo "Discovery output example_count=${{ steps.discover.outputs.example_count }}"
@@ -249,7 +249,7 @@ jobs:
     name: Build test app ${{ matrix.test.component }} / ${{ matrix.test.test_path }} (${{ matrix.idf_version }} / ${{ matrix.test.build_target }})
     runs-on: ubuntu-latest
     needs: discover_test_apps
-    if: ${{ needs.discover_test_apps.outputs.test_count != '0' }}
+    if: ${{ fromJSON(needs.discover_test_apps.outputs.test_count || '0') > 0 }}
     strategy:
       fail-fast: false
       matrix:
@@ -376,7 +376,7 @@ jobs:
     needs:
       - discover_test_apps
       - build_test_apps_for_qemu
-    if: ${{ needs.discover_test_apps.outputs.test_count != '0' }}
+    if: ${{ fromJSON(needs.discover_test_apps.outputs.test_count || '0') > 0 }}
     strategy:
       fail-fast: false
       matrix:

@@ -78,7 +78,7 @@ jobs:
     name: Test ${{ matrix.test.component }} / ${{ matrix.test.test_path }} (${{ matrix.idf_version }} / ${{ matrix.test.qemu_target }})
     runs-on: ubuntu-latest
     needs: discover_test_apps
-    if: ${{ needs.discover_test_apps.outputs.test_count != '0' }}
+    if: ${{ fromJSON(needs.discover_test_apps.outputs.test_count || '0') > 0 }}
     strategy:
       fail-fast: false
       matrix:
