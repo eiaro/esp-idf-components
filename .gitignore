@@ -1,15 +1,16 @@
 # SPDX-FileCopyrightText: 2026 Ronny Eia <3652665+eiaro@users.noreply.github.com>
 # SPDX-License-Identifier: MIT
 
-**/.vscode/*
+**/.vscode/
 **/sdkconfig
 **/sdkconfig.old
 **/dependencies.lock
-**/dist/*
-**/build/*
+**/dist/
+**/build/
 **/doxygen_output*
-**/__pycache__/*
-**/.pytest_cache/*
-**/.cache/*
-**/docs_build_output/*
-**/build/*
+**/__pycache__/
+**/.pytest_cache/
+**/.cache/
+**/.venv/
+**/venv/
+**/docs_build_output/

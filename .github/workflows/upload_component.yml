@@ -1,10 +1,12 @@
 name: Publish components
+# Release flow docs: see README.md -> "Release and publish flow"
 
 on:
   pull_request:
+  workflow_dispatch:
   push:
-    branches:
-      - master
+    tags:
+      - 'v*'
 
 jobs:
   discover_components:
@@ -13,11 +15,15 @@ jobs:
     outputs:
       component_matrix: ${{ steps.discover.outputs.component_matrix }}
       component_count: ${{ steps.discover.outputs.component_count }}
+      discovered_count: ${{ steps.discover.outputs.discovered_count }}
+      previous_tag: ${{ steps.discover.outputs.previous_tag }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - id: discover
-        name: Find components automatically
+        name: Find publishable components
         shell: bash
         run: |
           set -euo pipefail
@@ -25,44 +31,149 @@ jobs:
           python - << 'PY'
           import json
           import os
+          import re
+          import subprocess
           from pathlib import Path
 
           root = Path(os.environ["GITHUB_WORKSPACE"])
-          components = [
-              {"name": manifest.parent.name}
+          github_ref = os.environ.get("GITHUB_REF", "")
+          is_release_tag = github_ref.startswith("refs/tags/v")
+
+          all_components = [
+              manifest.parent.name
               for manifest in sorted(root.glob("*/idf_component.yml"))
           ]
+
+          def run_git(*args: str) -> str:
+              return subprocess.check_output(["git", *args], cwd=root, text=True).strip()
+
+          def extract_version(text: str, component_name: str) -> str:
+              match = re.search(r"(?m)^\s*version\s*:\s*[\"']?([^\"'\n#]+)", text)
+              if not match:
+                  raise RuntimeError(f"Missing version in {component_name}/idf_component.yml")
+              return match.group(1).strip()
+
+          def version_key(version: str):
+              normalized = version.strip().lower()
+              match = re.match(r"^(\d+(?:\.\d+)*)(.*)$", normalized)
+              if not match:
+                  return ((0,), -1, normalized)
+
+              number_part, suffix = match.groups()
+              number_values = tuple(int(part) for part in number_part.split("."))
+
+              suffix_text = suffix.strip("-_.+ ")
+              if not suffix_text:
+                  stage_rank = 3
+              elif "rc" in suffix_text:
+                  stage_rank = 2
+              elif "beta" in suffix_text or suffix_text.startswith("b"):
+                  stage_rank = 1
+              elif "alpha" in suffix_text or suffix_text.startswith("a") or "pre" in suffix_text:
+                  stage_rank = 0
+              else:
+                  stage_rank = 1
+
+              return (number_values, stage_rank, suffix_text)
+
+          previous_tag = ""
+          publishable_components = list(all_components)
+
+          if is_release_tag:
+              try:
+                  previous_tag = run_git("describe", "--tags", "--match", "v*", "--abbrev=0", "HEAD^")
+              except Exception:
+                  previous_tag = ""
+
+              if previous_tag:
+                  changed_files_raw = run_git("diff", "--name-only", f"{previous_tag}..HEAD")
+                  changed_files = [line for line in changed_files_raw.splitlines() if line]
+                  changed_components = {
+                      path.split("/", 1)[0]
+                      for path in changed_files
+                      if "/" in path and (root / path.split("/", 1)[0] / "idf_component.yml").is_file()
+                  }
+                  publishable_components = sorted(changed_components)
+
+                  errors = []
+                  for component_name in publishable_components:
+                      current_manifest = root / component_name / "idf_component.yml"
+                      current_text = current_manifest.read_text(encoding="utf-8")
+                      current_version = extract_version(current_text, component_name)
+
+                      previous_file = f"{previous_tag}:{component_name}/idf_component.yml"
+                      try:
+                          previous_text = run_git("show", previous_file)
+                      except Exception:
+                          continue
+
+                      previous_version = extract_version(previous_text, component_name)
+                      if version_key(current_version) <= version_key(previous_version):
+                          errors.append(
+                              f"{component_name}: version must increase (previous={previous_version}, current={current_version})"
+                          )
+
+                  if errors:
+                      raise RuntimeError("Version validation failed:\n - " + "\n - ".join(errors))
+              else:
+                  publishable_components = list(all_components)
+
+          components = [{"name": component_name} for component_name in publishable_components]
 
           output_file = Path(os.environ["GITHUB_OUTPUT"])
           with output_file.open("a", encoding="utf-8") as f:
               f.write(f"component_matrix={json.dumps(components)}\n")
               f.write(f"component_count={len(components)}\n")
+              f.write(f"discovered_count={len(all_components)}\n")
+              f.write(f"previous_tag={previous_tag}\n")
 
-          print(f"Discovered {len(components)} component(s)")
+          print(f"Discovered {len(all_components)} component(s) in repository")
+          if is_release_tag:
+              if previous_tag:
+                  print(f"Previous release tag: {previous_tag}")
+                  print(f"Publishable changed component(s): {len(components)}")
+              else:
+                  print("No previous release tag found; treating as first release and including all components")
+          else:
+              print("Non-tag event; including all components for dry-run validation")
+
           for item in components:
               print(f" - {item['name']}")
           PY
 
-      - name: Fail when no components found
-        if: ${{ fromJSON(steps.discover.outputs.component_count || '0') == 0 }}
+      - name: Fail when repository has no components
+        if: ${{ fromJSON(steps.discover.outputs.discovered_count || '0') == 0 }}
         run: |
           echo "No idf_component.yml files were discovered in repository root subfolders"
           exit 1
 
+      - name: Skip publish because no components changed
+        if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && fromJSON(steps.discover.outputs.component_count || '0') == 0 }}
+        run: |
+          echo "No components changed since previous release tag (${{ steps.discover.outputs.previous_tag }})"
+
   publish_components:
     name: Upload ${{ matrix.component.name }}
     needs: discover_components
+    if: ${{ fromJSON(needs.discover_components.outputs.component_count || '0') > 0 }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         component: ${{ fromJson(needs.discover_components.outputs.component_matrix) }}
     env:
-      SHOULD_PUBLISH: ${{ github.event_name == 'push' && github.ref_name == 'master' && secrets.IDF_COMPONENT_API_TOKEN != '' }}
+      SHOULD_PUBLISH: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && secrets.IDF_COMPONENT_API_TOKEN != '' }}
+      HAS_TOKEN: ${{ secrets.IDF_COMPONENT_API_TOKEN != '' }}
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+
+      - name: Fail when publish token is missing for a release tag
+        if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && env.HAS_TOKEN != 'true' }}
+        run: |
+          echo "IDF_COMPONENT_API_TOKEN is required to publish on release tags"
+          exit 1
 
       - name: Select publish mode
         run: |
