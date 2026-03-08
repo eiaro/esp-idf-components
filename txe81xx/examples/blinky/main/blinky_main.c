@@ -76,10 +76,10 @@ void app_main(void)
 
     ESP_ERROR_CHECK(txe81xx_set_direction(dev, TXE_PORT0, TXE81XX_EXAMPLE_BLINK_MASK));
 
-    bool on = false;
+    bool output_enabled = false;
     while (true) {
-        on = !on;
-        const uint8_t out = on ? TXE81XX_EXAMPLE_BLINK_MASK : 0x00;
+        output_enabled = !output_enabled;
+        const uint8_t out = output_enabled ? TXE81XX_EXAMPLE_BLINK_MASK : 0x00;
         ESP_ERROR_CHECK(txe81xx_write_outputs(dev, TXE_PORT0, out));
         ESP_LOGI(TAG, "PORT0 output=0x%02" PRIX8, out);
         vTaskDelay(pdMS_TO_TICKS(500));
