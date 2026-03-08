@@ -51,7 +51,7 @@ void app_main(void)
         .quadhd_io_num = -1,
         .max_transfer_sz = 0,
         .flags = SPICOMMON_BUSFLAG_MASTER,
-        .isr_cpu_id = INTR_CPU_ID_AUTO,
+        .isr_cpu_id = ESP_INTR_CPU_AFFINITY_AUTO,
         .intr_flags = 0,
     };
 

@@ -3,4 +3,5 @@
 # SPDX-License-Identifier: MIT
 
 idf_component_register(SRCS "blinky_main.c"
+                       PRIV_REQUIRES esp_driver_spi
                        REQUIRES txe81xx)
