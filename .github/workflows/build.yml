@@ -174,3 +174,36 @@ jobs:
           target: ${{ matrix.idf_target }}
           path: ${{ matrix.example.example_path }}
 
+  pytest_virtual_blinky:
+    name: Pytest virtual_blinky
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install pytest dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest pytest-embedded pytest-embedded-idf
+
+      - name: Collect pytest cases for virtual_blinky
+        run: |
+          pytest -q --collect-only txe81xx/test_apps/virtual_blinky
+
+      - name: Run pytest-embedded on hardware (optional)
+        env:
+          TEST_SERIAL_PORT: ${{ vars.TEST_SERIAL_PORT }}
+        run: |
+          if [ -z "${TEST_SERIAL_PORT}" ]; then
+            echo "TEST_SERIAL_PORT is not configured. Skipping hardware pytest run."
+            exit 0
+          fi
+
+          pytest -q txe81xx/test_apps/virtual_blinky --target esp32 --port "${TEST_SERIAL_PORT}"
+
