@@ -1,0 +1,14 @@
+# SPDX-FileCopyrightText: 2026 Ronny Eia <3652665+eiaro@users.noreply.github.com>
+# SPDX-License-Identifier: MIT
+
+version: "1.0.0"
+description: "ESP-IDF component for interfacing with the TXE81XX I/O expanders."
+url: "https://github.com/eiaro/esp-idf-txe81xx"
+license: "MIT"
+dependencies:
+	idf: ">=5.1"
+files:
+	exclude:
+	- "build/**"
+	- ".vscode/**"
+	- "doxygen_output/**"

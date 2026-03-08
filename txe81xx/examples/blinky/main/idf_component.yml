@@ -1,0 +1,9 @@
+# SPDX-FileCopyrightText: 2026 Ronny Eia <3652665+eiaro@users.noreply.github.com>
+# SPDX-License-Identifier: MIT
+
+version: 1.0.0
+description: "Example application for the txe81xx ESP-IDF component."
+dependencies:
+  idf: ">=5.1"
+  eiaro/txe81xx:
+    override_path: '../../../'

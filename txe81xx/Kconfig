@@ -1,0 +1,27 @@
+menu "TXE81xx Configuration"
+
+    config TXE81XX_USE_MUTEX
+        bool "Enable internal mutex"
+        default y
+        help
+            Serializes SPI transactions inside the driver.
+
+    config TXE81XX_DEFAULT_QUEUE_SIZE
+        int "Default SPI device queue size"
+        range 1 16
+        default 1
+
+    config TXE81XX_STRICT_STATUS_CHECK
+        bool "Strict check of status segment header/low byte"
+        default y
+        help
+            If enabled, validates that status[15:14]=0b11 and status[7:0]=0.
+
+    config TXE81XX_VERBOSE_LOG
+        bool "Enable verbose driver logging"
+        default n
+        help
+            Enables additional runtime logs for register access and IRQ flow.
+            Useful while debugging integration issues.
+
+endmenu
