@@ -7,8 +7,56 @@ on:
       - master
 
 jobs:
-  publish_components:
+  discover_components:
+    name: Discover components
     runs-on: ubuntu-latest
+    outputs:
+      component_matrix: ${{ steps.discover.outputs.component_matrix }}
+      component_count: ${{ steps.discover.outputs.component_count }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: discover
+        name: Find components automatically
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python - << 'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path(os.environ["GITHUB_WORKSPACE"])
+          components = [
+              {"name": manifest.parent.name}
+              for manifest in sorted(root.glob("*/idf_component.yml"))
+          ]
+
+          output_file = Path(os.environ["GITHUB_OUTPUT"])
+          with output_file.open("a", encoding="utf-8") as f:
+              f.write(f"component_matrix={json.dumps(components)}\\n")
+              f.write(f"component_count={len(components)}\\n")
+
+          print(f"Discovered {len(components)} component(s)")
+          for item in components:
+              print(f" - {item['name']}")
+          PY
+
+      - name: Fail when no components found
+        if: ${{ steps.discover.outputs.component_count == '0' }}
+        run: |
+          echo "No idf_component.yml files were discovered in repository root subfolders"
+          exit 1
+
+  publish_components:
+    name: Upload ${{ matrix.component.name }}
+    needs: discover_components
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        component: ${{ fromJson(needs.discover_components.outputs.component_matrix) }}
     env:
       SHOULD_PUBLISH: ${{ github.event_name == 'push' && github.ref_name == 'master' && secrets.IDF_COMPONENT_API_TOKEN != '' }}
     steps:
@@ -24,11 +72,11 @@ jobs:
             echo "Running in dry-run mode"
           fi
 
-      - name: Upload component set
+      - name: Upload component
         uses: espressif/upload-components-ci-action@v2
         with:
           components: |
-            txe81xx
+            ${{ matrix.component.name }}
           namespace: eiaro
           api_token: ${{ secrets.IDF_COMPONENT_API_TOKEN }}
           dry_run: ${{ env.SHOULD_PUBLISH != 'true' }}

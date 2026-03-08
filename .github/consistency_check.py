@@ -52,7 +52,13 @@ def validate_upload_workflow_components(root_dir: Path) -> list[str]:
     LOG.info("Checking component list in upload workflow")
 
     workflow = load_yaml(root_dir / ".github/workflows/upload_component.yml")
+    workflow_text = (root_dir / ".github/workflows/upload_component.yml").read_text(encoding="utf-8")
     jobs = workflow.get("jobs", {})
+
+    if "fromJson(needs.discover_components.outputs.component_matrix)" in workflow_text:
+        LOG.info("Upload workflow uses dynamic component discovery")
+        return []
+
     upload_step = None
     for job in jobs.values():
         steps = job.get("steps", []) if isinstance(job, dict) else []
