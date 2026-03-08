@@ -1,42 +1,55 @@
 # See https://pre-commit.com for more information
 # See https://pre-commit.com/hooks.html for more hooks
 repos:
--   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.2.0
-    hooks:
-    -   id: trailing-whitespace
-    -   id: end-of-file-fixer
-    -   id: check-added-large-files
--   repo: https://github.com/igrr/astyle_py.git
-    rev: v1.1.0
-    hooks:
-    -   id: astyle_py
-        args: ['--style=otbs', '--attach-namespaces', '--attach-classes', '--indent=spaces=4', '--convert-tabs', '--align-pointer=name', '--align-reference=name', '--keep-one-line-statements', '--pad-header', '--pad-oper']
--   repo: https://github.com/codespell-project/codespell
-    rev: v2.4.1
-    hooks:
-    -   id: codespell
--   repo: local
-    hooks:
-    -   id: consistency_check
-        name: Repo consistency checks
-        language: python
-        entry: python .github/consistency_check.py
-        pass_filenames: false
-        additional_dependencies:
-            - "toml; python_version < '3.11'"
-            - pyyaml
--   repo: https://github.com/espressif/esp-idf-kconfig.git
-    rev: v2.5.0
-    hooks:
-    -   id: check-kconfig-files
-    -   id: check-deprecated-kconfig-options
--   repo: local
-    hooks:
-    -   id: generate-api-md
-        name: Generate API markdown docs
-        language: python
-        entry: python .github/generate_api_md.py
-        pass_filenames: false
-        additional_dependencies:
-            - esp-doxybook
+
+- repo: https://github.com/igrr/astyle_py.git
+  rev: v1.1.0
+  hooks:
+    - id: astyle_py
+      args: ['--style=otbs', '--attach-namespaces', '--attach-classes', '--indent=spaces=4', '--convert-tabs', '--align-pointer=name', '--align-reference=name', '--keep-one-line-statements', '--pad-header', '--pad-oper']
+
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.3.0
+  hooks:
+    - id: trailing-whitespace
+      types_or: [c, c++]
+    - id: end-of-file-fixer
+      types_or: [c, c++]
+    - id: check-merge-conflict
+    - id: mixed-line-ending
+      types_or: [c, c++]
+      args: ['--fix=lf']
+      description: Forces to replace line ending by the UNIX 'lf' character
+
+- repo: https://github.com/codespell-project/codespell
+  rev: v2.4.1
+  hooks:
+    - id: codespell
+
+- repo: local
+  hooks:
+    - id: consistency_check
+      name: Repo consistency checks
+      language: python
+      entry: python .github/consistency_check.py
+      pass_filenames: false
+      additional_dependencies:
+        - "toml; python_version < '3.11'"
+        - pyyaml
+
+    - id: generate-api-md
+      name: Generate API markdown docs
+      language: python
+      entry: python .github/generate_api_md.py
+      pass_filenames: false
+      additional_dependencies:
+        - esp-doxybook
+
+
+- repo: https://github.com/espressif/esp-idf-kconfig.git
+  rev: v2.5.0
+  hooks:
+    - id: check-kconfig-files
+    - id: check-deprecated-kconfig-options
+
+    

@@ -2,6 +2,7 @@
 
 import argparse
 import logging
+import shutil
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -14,9 +15,11 @@ LOG = logging.getLogger("api_md")
 @dataclass
 class ComponentDocs:
     name: str
+    component_dir: Path
     docs_dir: Path
     doxyfile: Path
     xml_dir: Path
+    root_api_md: Path
     api_md: Path
 
 
@@ -60,9 +63,11 @@ def discover_component_docs(root: Path) -> list[ComponentDocs]:
         items.append(
             ComponentDocs(
                 name=component_dir.name,
+                component_dir=component_dir,
                 docs_dir=docs_dir,
                 doxyfile=doxyfile,
                 xml_dir=xml_dir,
+                root_api_md=component_dir / "API.md",
                 api_md=api_md,
             )
         )
@@ -78,8 +83,13 @@ def execute(cmd: list[str], cwd: Path, dry_run: bool) -> None:
 
 def build_api_for_component(item: ComponentDocs, dry_run: bool) -> None:
     item.api_md.parent.mkdir(parents=True, exist_ok=True)
+    item.root_api_md.parent.mkdir(parents=True, exist_ok=True)
     execute(["doxygen", "Doxyfile"], cwd=item.docs_dir, dry_run=dry_run)
-    execute(["esp-doxybook", "-i", str(item.xml_dir), "-o", str(item.api_md)], cwd=item.docs_dir, dry_run=dry_run)
+    execute(["esp-doxybook", "-i", str(item.xml_dir), "-o", str(item.root_api_md)], cwd=item.docs_dir, dry_run=dry_run)
+    if dry_run:
+        LOG.info("copy %s -> %s", item.root_api_md, item.api_md)
+    else:
+        shutil.copyfile(item.root_api_md, item.api_md)
 
 
 def main() -> int:
