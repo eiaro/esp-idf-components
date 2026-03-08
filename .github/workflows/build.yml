@@ -109,7 +109,7 @@ jobs:
           root = Path(os.environ["GITHUB_WORKSPACE"])
           tests = []
           supported_qemu_targets = {"esp32", "esp32c3"}
-          build_targets = {"esp32", "esp32s3"}
+          build_targets = {"esp32", "esp32c3"}
           target_mark_re = re.compile(r"@pytest\.mark\.(esp32|esp32s2|esp32s3|esp32c2|esp32c3|esp32c6|esp32h2|esp32p4)")
 
           for manifest in sorted(root.glob("*/idf_component.yml")):
@@ -483,4 +483,4 @@ jobs:
             -v "${GITHUB_WORKSPACE}/.cache/pip:/pip-cache" \
             -w "/project/${{ matrix.test.test_path }}" \
             "espressif/idf:${{ matrix.idf_version }}" \
-            bash -lc "PIP_CACHE_DIR=/pip-cache python -m pip install --upgrade pip && PIP_CACHE_DIR=/pip-cache python -m pip install pytest pytest-embedded pytest-embedded-idf pytest-embedded-qemu esptool && (cd build && python -m esptool --chip ${{ matrix.test.qemu_target }} merge_bin -o flash_image.bin @flash_args) && pytest -q -o python_files='pytest*.py test_*.py *_test.py' --target ${{ matrix.test.qemu_target }} --embedded-services qemu"
+            bash -lc "PIP_CACHE_DIR=/pip-cache python -m pip install --upgrade pip && PIP_CACHE_DIR=/pip-cache python -m pip install pytest pytest-embedded pytest-embedded-idf pytest-embedded-qemu esptool && (cd build && python -m esptool --chip ${{ matrix.test.qemu_target }} merge_bin -o flash_image.bin @flash_args) && pytest -q -o python_files='pytest*.py test_*.py *_test.py' --target ${{ matrix.test.qemu_target }} --app-path . --build-dir build --embedded-services idf,qemu"
