@@ -21,6 +21,7 @@ body:
       multiple: false
       options:
         - txe81xx
+        - max31856
         - Other
     validations:
       required: true

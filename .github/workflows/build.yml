@@ -73,7 +73,7 @@ jobs:
           PY
 
       - name: Fail when no examples found
-        if: ${{ steps.discover.outputs.example_count == '' || steps.discover.outputs.example_count == '0' }}
+        if: ${{ fromJSON(steps.discover.outputs.example_count || '0') == 0 }}
         shell: bash
         run: |
           echo "Discovery output example_count=${{ steps.discover.outputs.example_count }}"
@@ -237,6 +237,24 @@ jobs:
         run: |
           echo "Skipping unsupported combination: ${{ steps.compatibility.outputs.reason }}"
 
+      - name: Pre-pull ESP-IDF image (retry)
+        if: ${{ steps.compatibility.outputs.should_build == 'true' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          image="espressif/idf:${{ matrix.idf_version }}"
+          for attempt in 1 2 3 4 5; do
+            if docker pull "$image"; then
+              exit 0
+            fi
+            echo "Pull attempt ${attempt}/5 failed for ${image}."
+            if [ "$attempt" -lt 5 ]; then
+              sleep $((attempt * 10))
+            fi
+          done
+          echo "Failed to pull ${image} after 5 attempts"
+          exit 1
+
       - name: Build example with ESP-IDF CI action
         if: ${{ steps.compatibility.outputs.should_build == 'true' }}
         uses: espressif/esp-idf-ci-action@v1
@@ -249,7 +267,7 @@ jobs:
     name: Build test app ${{ matrix.test.component }} / ${{ matrix.test.test_path }} (${{ matrix.idf_version }} / ${{ matrix.test.build_target }})
     runs-on: ubuntu-latest
     needs: discover_test_apps
-    if: ${{ needs.discover_test_apps.outputs.test_count != '0' }}
+    if: ${{ fromJSON(needs.discover_test_apps.outputs.test_count || '0') > 0 }}
     strategy:
       fail-fast: false
       matrix:
@@ -346,6 +364,24 @@ jobs:
           set -euo pipefail
           mkdir -p "${GITHUB_WORKSPACE}/.ccache/${{ matrix.idf_version }}/${{ matrix.test.build_target }}"
 
+      - name: Pre-pull ESP-IDF image (retry)
+        if: ${{ steps.compatibility.outputs.should_build == 'true' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          image="espressif/idf:${{ matrix.idf_version }}"
+          for attempt in 1 2 3 4 5; do
+            if docker pull "$image"; then
+              exit 0
+            fi
+            echo "Pull attempt ${attempt}/5 failed for ${image}."
+            if [ "$attempt" -lt 5 ]; then
+              sleep $((attempt * 10))
+            fi
+          done
+          echo "Failed to pull ${image} after 5 attempts"
+          exit 1
+
       - name: Build test app in ESP-IDF container
         if: ${{ steps.compatibility.outputs.should_build == 'true' }}
         shell: bash
@@ -376,7 +412,7 @@ jobs:
     needs:
       - discover_test_apps
       - build_test_apps_for_qemu
-    if: ${{ needs.discover_test_apps.outputs.test_count != '0' }}
+    if: ${{ fromJSON(needs.discover_test_apps.outputs.test_count || '0') > 0 }}
     strategy:
       fail-fast: false
       matrix:
@@ -471,6 +507,24 @@ jobs:
         with:
           name: ${{ steps.artifact_meta.outputs.artifact_name }}
           path: ${{ matrix.test.test_path }}
+
+      - name: Pre-pull ESP-IDF image (retry)
+        if: ${{ steps.compatibility.outputs.should_test == 'true' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          image="espressif/idf:${{ matrix.idf_version }}"
+          for attempt in 1 2 3 4 5; do
+            if docker pull "$image"; then
+              exit 0
+            fi
+            echo "Pull attempt ${attempt}/5 failed for ${image}."
+            if [ "$attempt" -lt 5 ]; then
+              sleep $((attempt * 10))
+            fi
+          done
+          echo "Failed to pull ${image} after 5 attempts"
+          exit 1
 
       - name: Run tests in QEMU
         if: ${{ steps.compatibility.outputs.should_test == 'true' }}
