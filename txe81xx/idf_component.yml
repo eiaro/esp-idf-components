@@ -3,7 +3,7 @@
 
 version: "1.0.1"
 description: "ESP-IDF component for interfacing with the TXE81XX I/O expanders."
-url: "https://github.com/eiaro/esp-idf-txe81xx"
+url: "https://github.com/eiaro/esp-idf-components/tree/main/txe81xx"
 license: "MIT"
 dependencies:
   idf: ">=5.3"
