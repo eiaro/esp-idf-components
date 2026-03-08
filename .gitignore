@@ -6,5 +6,5 @@
 **/sdkconfig.old
 **/dependencies.lock
 **/dist/*
-**/build*
+**/build/*
 **/doxygen_output*
