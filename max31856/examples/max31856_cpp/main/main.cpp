@@ -8,14 +8,14 @@
 #include "driver/gpio.h"
 #include "max31856.hpp"
 
-static const char* TAG = "MAX31856_TEST";
+static const char *TAG = "MAX31856_TEST";
 
 // SPI Configuration
 #define ESP_HOST VSPI_HOST
-#define PIN_NUM_MISO 19
-#define PIN_NUM_MOSI 23
-#define PIN_NUM_CLK  18
-#define PIN_NUM_CS   5
+#define PIN_NUM_MISO GPIO_NUM_2
+#define PIN_NUM_MOSI GPIO_NUM_7
+#define PIN_NUM_CLK  GPIO_NUM_6
+#define PIN_NUM_CS   GPIO_NUM_10
 #define SPI_CLOCK_HZ 1000000  // 1 MHz
 
 extern "C" void app_main(void)

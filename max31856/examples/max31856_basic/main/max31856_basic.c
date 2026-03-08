@@ -18,10 +18,10 @@
 #include "max31856.h"
 
 #define ESP_HOST VSPI_HOST
-#define PIN_NUM_MOSI GPIO_NUM_23
-#define PIN_NUM_MISO GPIO_NUM_19
-#define PIN_NUM_CLK GPIO_NUM_18
-#define PIN_NUM_CS GPIO_NUM_5
+#define PIN_NUM_MOSI GPIO_NUM_7
+#define PIN_NUM_MISO GPIO_NUM_2
+#define PIN_NUM_CLK GPIO_NUM_6
+#define PIN_NUM_CS GPIO_NUM_10
 
 #define SPI_CLOCK_HZ (1 * 1000 * 1000) // 1 MHz
 #define READ_DELAY_MS 1000
@@ -81,14 +81,16 @@ void app_main(void)
 
     float tc_temperature, cj_temperature;
     uint8_t status;
-    while (1)
-    {
-        if (max31856_read_thermocouple(&max31856_dev, &tc_temperature) != ESP_OK)
+    while (1) {
+        if (max31856_read_thermocouple(&max31856_dev, &tc_temperature) != ESP_OK) {
             ESP_LOGE(TAG, "Failed to read thermocouple");
-        if (max31856_read_cold_junction(&max31856_dev, &cj_temperature) != ESP_OK)
+        }
+        if (max31856_read_cold_junction(&max31856_dev, &cj_temperature) != ESP_OK) {
             ESP_LOGE(TAG, "Failed to read cold junction");
-        if (max31856_read_fault_status(&max31856_dev, &status) != ESP_OK)
+        }
+        if (max31856_read_fault_status(&max31856_dev, &status) != ESP_OK) {
             ESP_LOGE(TAG, "Failed to read fault status");
+        }
 
         ESP_LOGI(TAG, "Read: tc=%f, cj=%f, status=%x",
                  tc_temperature,
