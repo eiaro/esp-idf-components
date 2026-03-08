@@ -112,13 +112,10 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Build example in Espressif Docker image
-        shell: bash
-        run: |
-          set -euo pipefail
-          docker run --rm \
-            -v "${GITHUB_WORKSPACE}:/project" \
-            -w "/project/${{ matrix.example.example_path }}" \
-            "espressif/idf:${{ matrix.idf_version }}" \
-            bash -lc "idf.py set-target ${{ matrix.idf_target }} build"
+      - name: Build example with ESP-IDF CI action
+        uses: espressif/esp-idf-ci-action@v1
+        with:
+          esp_idf_version: ${{ matrix.idf_version }}
+          target: ${{ matrix.idf_target }}
+          path: ${{ matrix.example.example_path }}
 
