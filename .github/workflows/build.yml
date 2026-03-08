@@ -112,7 +112,61 @@ jobs:
         with:
           submodules: recursive
 
+      - id: compatibility
+        name: Check IDF compatibility for this component
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python - << 'PY'
+          import os
+          import re
+          from pathlib import Path
+
+          component = os.environ["COMPONENT"]
+          idf_version = os.environ["IDF_VERSION"]
+          root = Path(os.environ["GITHUB_WORKSPACE"])
+          manifest = root / component / "idf_component.yml"
+
+          should_build = True
+          reason = "supported"
+
+          if manifest.is_file():
+              text = manifest.read_text(encoding="utf-8")
+              m = re.search(r"(?m)^\s*idf\s*:\s*[\"']?([^\"'\n]+)", text)
+              requirement = m.group(1).strip() if m else ""
+
+              if idf_version != "latest" and requirement.startswith(">="):
+                  req = requirement[2:].strip()
+                  req_match = re.match(r"^(\d+)\.(\d+)", req)
+                  idf_match = re.match(r"^release-v(\d+)\.(\d+)$", idf_version)
+                  if req_match and idf_match:
+                      req_major, req_minor = map(int, req_match.groups())
+                      ver_major, ver_minor = map(int, idf_match.groups())
+                      if (ver_major, ver_minor) < (req_major, req_minor):
+                          should_build = False
+                          reason = f"requires idf {requirement}, got {idf_version}"
+
+          output_path = Path(os.environ["GITHUB_OUTPUT"])
+          with output_path.open("a", encoding="utf-8") as f:
+              f.write(f"should_build={'true' if should_build else 'false'}\n")
+              f.write(f"reason={reason}\n")
+
+          print(f"Component: {component}")
+          print(f"IDF version: {idf_version}")
+          print(f"Decision: {'build' if should_build else 'skip'} ({reason})")
+          PY
+        env:
+          COMPONENT: ${{ matrix.example.component }}
+          IDF_VERSION: ${{ matrix.idf_version }}
+
+      - name: Skip unsupported IDF combination
+        if: ${{ steps.compatibility.outputs.should_build != 'true' }}
+        run: |
+          echo "Skipping unsupported combination: ${{ steps.compatibility.outputs.reason }}"
+
       - name: Build example with ESP-IDF CI action
+        if: ${{ steps.compatibility.outputs.should_build == 'true' }}
         uses: espressif/esp-idf-ci-action@v1
         with:
           esp_idf_version: ${{ matrix.idf_version }}
