@@ -478,6 +478,8 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "${GITHUB_WORKSPACE}/.cache/pip"
+          # Use `python -m pytest` instead of the `pytest` entrypoint to avoid PATH-based
+          # script shadowing that can break `esptool` imports inside pytest-embedded-qemu.
           docker run --rm \
             -v "${GITHUB_WORKSPACE}:/project" \
             -v "${GITHUB_WORKSPACE}/.cache/pip:/pip-cache" \
