@@ -4,6 +4,6 @@
 version: 1.0.0
 description: "Example application for the txe81xx ESP-IDF component."
 dependencies:
-  idf: ">=5.1"
+  idf: ">=5.3"
   eiaro/txe81xx:
     override_path: '../../../'

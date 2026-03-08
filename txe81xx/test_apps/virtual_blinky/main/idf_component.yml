@@ -1,4 +1,4 @@
 dependencies:
   idf: ">=5.3"
   eiaro/txe81xx:
-    override_path: '../../'
+    override_path: '../../../'
