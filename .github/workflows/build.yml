@@ -30,6 +30,7 @@ jobs:
 
           root = Path(os.environ["GITHUB_WORKSPACE"])
           examples = []
+          seen_paths = set()
 
           for manifest in sorted(root.glob("*/idf_component.yml")):
               component_dir = manifest.parent
@@ -37,15 +38,32 @@ jobs:
               if not examples_root.is_dir():
                   continue
 
-              for cmake_file in sorted(examples_root.glob("**/CMakeLists.txt")):
-                  example_dir = cmake_file.parent
-                  if (example_dir / "main").is_dir() and (example_dir / "CMakeLists.txt").is_file():
-                      examples.append(
-                          {
-                              "component": component_dir.name,
-                              "example_path": str(example_dir.relative_to(root)).replace("\\\\", "/"),
-                          }
-                      )
+              # Primary strategy: discover app roots from idf_component.yml files in examples.
+              # Typical layout is examples/<app>/main/idf_component.yml.
+              for idf_manifest in sorted(examples_root.glob("**/idf_component.yml")):
+                  app_dir = idf_manifest.parent.parent if idf_manifest.parent.name == "main" else idf_manifest.parent
+                  app_cmake = app_dir / "CMakeLists.txt"
+                  if not app_cmake.is_file():
+                      continue
+
+                  rel_path = str(app_dir.relative_to(root)).replace("\\", "/")
+                  if rel_path in seen_paths:
+                      continue
+                  seen_paths.add(rel_path)
+                  examples.append({"component": component_dir.name, "example_path": rel_path})
+
+              # Fallback: direct app folders under examples/<app>/ with CMakeLists.txt + main/.
+              for app_dir in sorted(path for path in examples_root.iterdir() if path.is_dir()):
+                  if not (app_dir / "CMakeLists.txt").is_file():
+                      continue
+                  if not (app_dir / "main").is_dir():
+                      continue
+
+                  rel_path = str(app_dir.relative_to(root)).replace("\\", "/")
+                  if rel_path in seen_paths:
+                      continue
+                  seen_paths.add(rel_path)
+                  examples.append({"component": component_dir.name, "example_path": rel_path})
 
           matrix_json = json.dumps(examples)
           output_file = Path(os.environ["GITHUB_OUTPUT"])
@@ -60,8 +78,15 @@ jobs:
 
       - name: Fail when no examples found
         if: ${{ steps.discover.outputs.example_count == '0' }}
+        shell: bash
         run: |
+          echo "Discovery output example_count=${{ steps.discover.outputs.example_count }}"
+          echo "Discovery output example_matrix=${{ steps.discover.outputs.example_matrix }}"
           echo "No examples were discovered. Add at least one example under <component>/examples/*"
+          echo "Top-level component manifests:"
+          find . -maxdepth 2 -name idf_component.yml -print | sed 's#^./##'
+          echo "Example manifests found under examples/:"
+          find . -type f -name idf_component.yml | grep '/examples/' || true
           exit 1
 
   build:
