@@ -8,3 +8,8 @@
 **/dist/*
 **/build/*
 **/doxygen_output*
+**/__pycache__/*
+**/.pytest_cache/*
+**/.cache/*
+**/docs_build_output/*
+**/build/*

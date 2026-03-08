@@ -1,4 +1,0 @@
-txe81xx:
-  disable:
-    - if: IDF_VERSION_MAJOR <= 5 and IDF_VERSION_MINOR < 3
-      reason: "Requires IDF v5.3 or later"
