@@ -6,6 +6,9 @@
 #include "esp_log.h"
 #include "driver/spi_master.h"
 #include "driver/gpio.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+
 #include "max31856.hpp"
 
 static const char *TAG = "MAX31856_TEST";
